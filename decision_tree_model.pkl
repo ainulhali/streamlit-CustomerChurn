@@ -1,0 +1,15 @@
+import pickle
+from sklearn.tree import DecisionTreeClassifier
+import numpy as np
+
+# Data dummy
+X = np.random.rand(100, 4)
+y = np.random.randint(0, 2, 100)
+
+# Train model
+model = DecisionTreeClassifier()
+model.fit(X, y)
+
+# Simpan model
+with open("decision_tree_model.pkl", "wb") as f:
+    pickle.dump(model, f)
