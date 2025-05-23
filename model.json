@@ -1,0 +1,9 @@
+import json
+from sklearn.tree import export_text
+
+# Misal model Anda bernama: model
+# Simpan sebagai JSON
+tree_rules = export_text(model, feature_names=X.columns.tolist())
+
+with open('model.json', 'w') as f:
+    json.dump({'rules': tree_rules}, f)

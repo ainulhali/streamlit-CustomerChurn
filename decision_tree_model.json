@@ -1,1 +1,0 @@
-{"model_rules": "|--- feature_0 <= 0.90\n|   |--- class: 0\n|--- feature_0 >  0.90\n|   |--- feature_2 <= 0.50\n|   |   |--- class: 1\n|   |--- feature_2 >  0.50\n|   |   |--- feature_0 <= 0.91\n|   |   |   |--- class: 1\n|   |   |--- feature_0 >  0.91\n|   |   |   |--- class: 0\n"}
