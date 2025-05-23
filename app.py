@@ -1,42 +1,50 @@
 import streamlit as st
-import numpy as np
-import pickle
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-import matplotlib.pyplot as plt
+import pandas as pd
+import json
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import LabelEncoder
 
-# Load model
-with open("decision_tree_model.pkl", "rb") as f:
-    model = pickle.load(f)
+# Load dataset
+df = pd.read_csv("dataset_customerchurn.csv")
 
-# Input form
+# Preprocessing seperti saat training
+df = df.dropna()
+customer_ids = df['customerID'].tolist()
+
+# Encode target
+le_churn = LabelEncoder()
+df['Churn'] = le_churn.fit_transform(df['Churn'])
+
+# Pisahkan fitur dan target
+X = df.drop(columns=['Churn', 'customerID'])
+y = df['Churn']
+
+# Encode semua kolom kategorikal
+encoders = {}
+for col in X.select_dtypes(include='object').columns:
+    le = LabelEncoder()
+    X[col] = le.fit_transform(X[col])
+    encoders[col] = le
+
+# Train ulang model (atau load model jika Anda simpan sebagai pickle)
+model = DecisionTreeClassifier()
+model.fit(X, y)
+
+# Streamlit UI
 st.title("Prediksi Churn Pelanggan")
-st.write("Masukkan fitur-fitur pelanggan:")
 
-col1, col2 = st.columns(2)
+selected_id = st.selectbox("Pilih customerID:", customer_ids)
 
-with col1:
-    feature_0 = st.number_input("Fitur 1", min_value=0.0, max_value=1.0)
-    feature_1 = st.number_input("Fitur 2", min_value=0.0, max_value=1.0)
+if st.button("Prediksi Churn"):
+    # Ambil data berdasarkan ID
+    input_data = df[df['customerID'] == selected_id]
+    input_X = input_data.drop(columns=['Churn', 'customerID'])
 
-with col2:
-    feature_2 = st.number_input("Fitur 3", min_value=0.0, max_value=1.0)
-    feature_3 = st.number_input("Fitur 4", min_value=0.0, max_value=1.0)
+    # Encode sama seperti training
+    for col in input_X.select_dtypes(include='object').columns:
+        input_X[col] = encoders[col].transform(input_X[col])
 
-input_data = np.array([[feature_0, feature_1, feature_2, feature_3]])
+    pred = model.predict(input_X)[0]
+    result = le_churn.inverse_transform([pred])[0]
 
-# Prediksi
-if st.button("Prediksi"):
-    prediction = model.predict(input_data)[0]
-    st.success(f"Hasil Prediksi: {'Churn' if prediction == 1 else 'Tidak Churn'}")
-
-    # Simulasi confusion matrix
-    X_dummy = np.random.rand(30, 4)
-    y_true = np.random.randint(0, 2, 30)
-    y_pred = model.predict(X_dummy)
-
-    cm = confusion_matrix(y_true, y_pred)
-    st.subheader("Confusion Matrix:")
-    fig, ax = plt.subplots()
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-    disp.plot(ax=ax)
-    st.pyplot(fig)
+    st.success(f"Hasil prediksi: {result}")
